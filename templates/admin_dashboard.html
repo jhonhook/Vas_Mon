@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VAS Admin Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ---------------- Auto-refresh dashboard every 10 sec ----------------
+function refreshDashboard() {
+    fetch(window.location.href)
+    .then(response => response.text())
+    .then(html => {
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(html, 'text/html');
+        document.getElementById('inTableBody').innerHTML = doc.getElementById('inTableBody').innerHTML;
+        document.getElementById('doneTableBody').innerHTML = doc.getElementById('doneTableBody').innerHTML;
+        updateChart();
+    })
+    .catch(err => console.log(err));
+}
+setInterval(refreshDashboard,10000);
+
+// ---------------- Tab functionality ----------------
+function openTab(evt, tabName) {
+    let i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i=0;i<tabcontent.length;i++) tabcontent[i].style.display="none";
+    tablinks = document.getElementsByClassName("tab-link");
+    for(i=0;i<tablinks.length;i++) tablinks[i].className=tablinks[i].className.replace(" active","");
+    document.getElementById(tabName).style.display="block";
+    evt.currentTarget.className += " active";
+}
+
+// ---------------- Table search ----------------
+function searchTable(inputId, tableBodyId){
+    let input = document.getElementById(inputId).value.toUpperCase();
+    let tr = document.getElementById(tableBodyId).getElementsByTagName("tr");
+    for(let i=0;i<tr.length;i++){
+        let tdName=tr[i].getElementsByTagName("td")[1];
+        let tdPLT=tr[i].getElementsByTagName("td")[3];
+        let show=false;
+        if(tdName && tdPLT){
+            if(tdName.innerText.toUpperCase().includes(input) || tdPLT.innerText.toUpperCase().includes(input)) show=true;
+        }
+        tr[i].style.display=show?"":"none";
+    }
+}
+
+// ---------------- Chart ----------------
+let shiftChart;
+function updateChart(){
+    const doneRecords = {{ done_records | tojson }};
+    let morning=0, evening=0;
+    doneRecords.forEach(r=>{
+        if(r.Shift==='Morning') morning++;
+        else if(r.Shift==='Evening') evening++;
+    });
+    shiftChart.data.datasets[0].data=[morning,evening];
+    shiftChart.update();
+}
+
+window.onload=function(){
+    shiftChart=new Chart(document.getElementById('shiftChart').getContext('2d'),{
+        type:'bar',
+        data:{
+            labels:['Morning','Evening'],
+            datasets:[{
+                label:'Completed Movements',
+                data:[0,0],
+                backgroundColor:['#667eea','#764ba2']
+            }]
+        },
+        options:{
+            responsive:true,
+            plugins:{legend:{display:false},title:{display:true,text:'Shift-wise Completed Movements'}}
+        }
+    });
+    updateChart();
+}
+</script>
+</head>
+<body>
+
+<!-- ================== NAVBAR ================== -->
+<div class="navbar">
+    <div class="nav-title">VAS – Admin Dashboard</div>
+    <div class="nav-links">
+        <a href="/" class="nav-btn">User Entry</a>
+        <a href="/logout" class="nav-btn danger">Logout</a>
+    </div>
+</div>
+
+<!-- ================== REPORT BUTTONS ================== -->
+<div class="report-buttons">
+    <a href="/download_styled/Vas_in_progress.xlsx" class="btn-primary">Download In-Progress Excel</a>
+    <a href="/download_styled/Vas_Done.xlsx" class="btn-primary">Download Completed Excel</a>
+    <a href="/generate_report/pdf" class="btn-primary">Generate PDF Report</a>
+</div>
+
+<!-- ================== TABS ================== -->
+<div class="tab-container">
+    <button class="tab-link active" onclick="openTab(event,'InProgress')">In-Progress</button>
+    <button class="tab-link" onclick="openTab(event,'Completed')">Completed</button>
+    <button class="tab-link" onclick="openTab(event,'ShiftAnalytics')">Shift Analytics</button>
+</div>
+
+<!-- ================== IN-PROGRESS TAB ================== -->
+<div id="InProgress" class="tab-content" style="display:block;">
+    <div class="table-card">
+        <h3>🔄 In-Progress Records</h3>
+        <input type="text" id="searchIn" onkeyup="searchTable('searchIn','inTableBody')" placeholder="Search Name / PLT ID..." class="search-box">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th><th>Name</th><th>Shift</th><th>PLT ID</th><th>Date</th><th>In Time</th>
+                    </tr>
+                </thead>
+                <tbody id="inTableBody">
+                    {% for row in in_records %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row["Name"] }}</td>
+                        <td>{{ row["Shift"] }}</td>
+                        <td>{{ row["PLT ID"] }}</td>
+                        <td>{{ row["Date"] }}</td>
+                        <td>{{ row["In Time"] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ================== COMPLETED TAB ================== -->
+<div id="Completed" class="tab-content">
+    <div class="table-card">
+        <h3>✅ Completed Records</h3>
+        <input type="text" id="searchDone" onkeyup="searchTable('searchDone','doneTableBody')" placeholder="Search Name / PLT ID..." class="search-box">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th><th>Name</th><th>Shift</th><th>PLT ID</th><th>Date</th><th>In Time</th><th>Out Time</th><th>Total Time</th>
+                    </tr>
+                </thead>
+                <tbody id="doneTableBody">
+                    {% for row in done_records %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row["Name"] }}</td>
+                        <td>{{ row["Shift"] }}</td>
+                        <td>{{ row["PLT ID"] }}</td>
+                        <td>{{ row["Date"] }}</td>
+                        <td>{{ row["In Time"] }}</td>
+                        <td>{{ row["Out Time"] }}</td>
+                        <td>{{ row["Total Time"] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ================== SHIFT ANALYTICS TAB ================== -->
+<div id="ShiftAnalytics" class="tab-content">
+    <div class="chart-card">
+        <h3>📊 Shift-wise Analytics</h3>
+        <canvas id="shiftChart" height="200"></canvas>
+    </div>
+</div>
+
+</body>
+</html>

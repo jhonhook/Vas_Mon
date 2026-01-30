@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VAS Time Tracking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function toggleFields() {
+            let status = document.getElementById("status").value;
+            document.getElementById("shiftDiv").style.display = status === "In" ? "block" : "none";
+            document.getElementById("pltIn").style.display = status === "In" ? "block" : "none";
+            document.getElementById("pltOut").style.display = status === "Out" ? "block" : "none";
+        }
+    </script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <div class="nav-title">VAS Time Tracking</div>
+    <a href="/admin" class="nav-btn">Admin Panel</a>
+</div>
+
+<div class="main-wrapper">
+    <div class="card">
+        <h2>Stock Movement Entry</h2>
+        <p class="subtitle">Track In / Out time of PLT assets</p>
+
+        <form method="POST">
+            <div class="form-group">
+                <label>Name</label>
+                <select name="name" required>
+                    {% for user in users %}
+                    <option value="{{ user }}">{{ user }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" id="status" onchange="toggleFields()" required>
+                    <option value="">Select Status</option>
+                    <option value="In">In</option>
+                    <option value="Out">Out</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="shiftDiv" style="display:none;">
+                <label>Shift</label>
+                <select name="shift">
+                    <option value="Morning">Morning</option>
+                    <option value="Evening">Evening</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="pltIn" style="display:none;">
+                <label>PLT ID</label>
+                <input type="text" name="plt_id_in" placeholder="Enter PLT ID">
+            </div>
+
+            <div class="form-group" id="pltOut" style="display:none;">
+                <label>PLT ID</label>
+                <select name="plt_id_out">
+                    {% for pid in active_ids %}
+                    <option value="{{ pid }}">{{ pid }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary">Submit Entry</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
