@@ -2,7 +2,7 @@
 Flask==2.3.3
 
 # Excel manipulation
-pandas==2.1.1
+pandas==3.0.0
 openpyxl==3.1.2
 XlsxWriter==3.1.6
 
@@ -17,3 +17,4 @@ matplotlib==3.8.0
 
 # Optional (for future JSON / API handling)
 numpy==1.26.0
+
