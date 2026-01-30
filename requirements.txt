@@ -1,6 +1,19 @@
+# Web framework
 Flask==2.3.3
+
+# Excel manipulation
 pandas==2.1.1
-XlsxWriter==3.1.6
 openpyxl==3.1.2
+XlsxWriter==3.1.6
+
+# PDF report generation
 fpdf==1.7.2
+
+# Production server
 gunicorn==21.2.0
+
+# Charts (if you use matplotlib in dashboard)
+matplotlib==3.8.0
+
+# Optional (for future JSON / API handling)
+numpy==1.26.0
